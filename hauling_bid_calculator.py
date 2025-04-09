@@ -1,5 +1,6 @@
 import streamlit as st
 import math
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Dump Truck Hauling Bid Calculator", layout="centered")
 st.title("🚛 Dump Truck Hauling Bid Calculator")
@@ -35,7 +36,7 @@ maintenance_per_mile = st.sidebar.number_input("Maintenance Cost per Mile ($)", 
 overhead_pct = st.sidebar.number_input("Overhead %", value=10.0) / 100
 profit_margin_pct = st.sidebar.number_input("Profit Margin %", value=20.0) / 100
 
-# --- Calculations ---
+# --- Calculations for Load-Based Bidding ---
 round_trip_miles = one_way_distance * 2
 total_loads = total_material / truck_capacity
 loads_per_truck_per_day = work_hours_per_day / round_trip_time
@@ -59,7 +60,7 @@ break_even_hourly = total_cost / (trucks_needed * work_hours_per_day * days_to_c
 total_tons = total_material * material_density
 
 # --- Summary Output ---
-st.subheader("📊 Bid Summary")
+st.subheader("📊 Bid Summary (Per Load)")
 st.metric("Material", material_type)
 st.metric("Material Density", f"{material_density} T/CY")
 st.metric("Total Tons", f"{total_tons:.0f} tons")
@@ -79,13 +80,50 @@ st.metric("Price per Load", f"${price_per_load:,.2f}")
 st.metric("Profit per Load", f"${profit_per_load:,.2f}")
 st.metric("Break-Even Hourly Rate", f"${break_even_hourly:,.2f}")
 
+# --- Hourly Bidding Section ---
+st.markdown("---")
+st.subheader("⏱️ Hourly Job Bidding")
+
+with st.expander("Calculate Hourly Job Bid"):
+    hourly_trucks = st.number_input("Number of Trucks", value=3)
+    hourly_hours_per_day = st.number_input("Hours per Day (Hourly Job)", value=8)
+    hourly_days = st.number_input("Number of Days", value=5)
+    hourly_driver_rate = st.number_input("Driver Hourly Rate ($)", value=32.0)
+    truck_hourly_cost = st.number_input("Truck Cost per Hour ($)", value=60.0)
+    fuel_cost_hourly = st.number_input("Fuel Cost per Hour ($)", value=15.0)
+
+    total_hourly_hours = hourly_trucks * hourly_hours_per_day * hourly_days
+    hourly_driver_cost = total_hourly_hours * hourly_driver_rate
+    hourly_truck_cost = total_hourly_hours * truck_hourly_cost
+    hourly_fuel_cost = total_hourly_hours * fuel_cost_hourly
+    hourly_base_cost = hourly_driver_cost + hourly_truck_cost + hourly_fuel_cost
+    hourly_overhead = hourly_base_cost * overhead_pct
+    hourly_profit = (hourly_base_cost + hourly_overhead) * profit_margin_pct
+    hourly_total_bid = hourly_base_cost + hourly_overhead + hourly_profit
+    hourly_rate = hourly_total_bid / total_hourly_hours
+
+    st.metric("Total Hours", total_hourly_hours)
+    st.metric("Driver Cost", f"${hourly_driver_cost:,.2f}")
+    st.metric("Truck Cost", f"${hourly_truck_cost:,.2f}")
+    st.metric("Fuel Cost", f"${hourly_fuel_cost:,.2f}")
+    st.metric("Total Cost", f"${hourly_base_cost:,.2f}")
+    st.metric("Overhead", f"${hourly_overhead:,.2f}")
+    st.metric("Profit", f"${hourly_profit:,.2f}")
+    st.metric("Total Bid", f"${hourly_total_bid:,.2f}")
+    st.metric("Bid Hourly Rate", f"${hourly_rate:,.2f}/hr")
+
 # --- Print to PDF Button ---
 st.markdown("---")
 st.subheader("🖨️ Export or Print")
 
-st.markdown(
+components.html(
     """
-    <button onclick="window.print()" style="
+    <script>
+    function printPDF() {
+        window.print();
+    }
+    </script>
+    <button onclick="printPDF()" style="
         background-color:#4CAF50;
         color:white;
         padding:10px 20px;
@@ -94,7 +132,7 @@ st.markdown(
         font-size:16px;
         cursor:pointer;
         margin-top:10px;
-    ">Print or Save as PDF</button>
+    ">🖨️ Print or Save as PDF</button>
     """,
-    unsafe_allow_html=True,
+    height=100,
 )
