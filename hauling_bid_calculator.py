@@ -2,12 +2,23 @@ import streamlit as st
 import math
 
 st.set_page_config(page_title="Dump Truck Hauling Bid Calculator", layout="centered")
-
 st.title("🚛 Dump Truck Hauling Bid Calculator")
 
+# --- Material Density Data ---
+material_densities = {
+    "Dirt (dry)": 1.1,
+    "Dirt (wet)": 1.3,
+    "Sand": 1.4,
+    "Gravel": 1.5,
+    "Crushed Stone": 1.6,
+}
+
+# --- Sidebar Inputs ---
 st.sidebar.header("🔧 Inputs")
 
-# Inputs
+material_type = st.sidebar.selectbox("Material Type", list(material_densities.keys()))
+material_density = material_densities[material_type]
+
 total_material = st.sidebar.number_input("Total Material to Haul (CY)", value=3000.0)
 truck_capacity = st.sidebar.number_input("Truck Capacity (CY)", value=10.0)
 round_trip_time = st.sidebar.number_input("Round Trip Time per Load (hrs)", value=1.25)
@@ -24,7 +35,7 @@ maintenance_per_mile = st.sidebar.number_input("Maintenance Cost per Mile ($)", 
 overhead_pct = st.sidebar.number_input("Overhead %", value=10.0) / 100
 profit_margin_pct = st.sidebar.number_input("Profit Margin %", value=20.0) / 100
 
-# Calculations
+# --- Calculations ---
 round_trip_miles = one_way_distance * 2
 total_loads = total_material / truck_capacity
 loads_per_truck_per_day = work_hours_per_day / round_trip_time
@@ -33,7 +44,7 @@ trucks_needed = math.ceil(total_loads / total_loads_per_truck)
 total_miles = total_loads * round_trip_miles
 gallons_used = total_miles / mpg
 fuel_cost = gallons_used * fuel_cost_per_gallon
-driver_hours = total_loads * round_trip_time
+driver_hours = work_hours_per_day * days_to_complete * trucks_needed
 driver_cost = driver_hours * driver_hourly_rate
 maintenance_cost = total_miles * maintenance_per_mile
 daily_ops_cost = (truck_lease + insurance + permits) * trucks_needed * days_to_complete
@@ -45,9 +56,13 @@ cost_per_load = total_cost / total_loads
 price_per_load = total_bid / total_loads
 profit_per_load = price_per_load - cost_per_load
 break_even_hourly = total_cost / (trucks_needed * work_hours_per_day * days_to_complete)
+total_tons = total_material * material_density
 
-# Output
-st.subheader("📊 Summary")
+# --- Summary Output ---
+st.subheader("📊 Bid Summary")
+st.metric("Material", material_type)
+st.metric("Material Density", f"{material_density} T/CY")
+st.metric("Total Tons", f"{total_tons:.0f} tons")
 st.metric("Trucks Needed", trucks_needed)
 st.metric("Total Loads", f"{total_loads:.2f}")
 st.metric("Total Miles", f"{total_miles:.0f} mi")
@@ -63,3 +78,23 @@ st.metric("Cost per Load", f"${cost_per_load:,.2f}")
 st.metric("Price per Load", f"${price_per_load:,.2f}")
 st.metric("Profit per Load", f"${profit_per_load:,.2f}")
 st.metric("Break-Even Hourly Rate", f"${break_even_hourly:,.2f}")
+
+# --- Print to PDF Button ---
+st.markdown("---")
+st.subheader("🖨️ Export or Print")
+
+st.markdown(
+    """
+    <button onclick="window.print()" style="
+        background-color:#4CAF50;
+        color:white;
+        padding:10px 20px;
+        border:none;
+        border-radius:5px;
+        font-size:16px;
+        cursor:pointer;
+        margin-top:10px;
+    ">Print or Save as PDF</button>
+    """,
+    unsafe_allow_html=True,
+)
