@@ -31,7 +31,7 @@ if job_type == "By the Load":
     material_density = material_densities[material_type]
 
     total_material = st.sidebar.number_input("Total Material to Haul (CY)", value=3000.0)
-    truck_capacity = st.sidebar.number_input("Truck Capacity (CY)", value=10.0)
+    truck_capacity_tons = st.sidebar.number_input("Truck Capacity (Tons)", value=20.0)
     round_trip_time = st.sidebar.number_input("Round Trip Time per Load (hrs)", value=1.25)
     work_hours_per_day = st.sidebar.number_input("Work Hours per Day", value=9.0)
     days_to_complete = st.sidebar.number_input("Days to Complete", value=5)
@@ -47,7 +47,8 @@ if job_type == "By the Load":
     profit_margin_pct = st.sidebar.number_input("Profit Margin %", value=20.0) / 100
 
     round_trip_miles = one_way_distance * 2
-    total_loads = total_material / truck_capacity
+    total_tons = total_material * material_density
+    total_loads = total_tons / truck_capacity_tons
     loads_per_truck_per_day = work_hours_per_day / round_trip_time
     total_loads_per_truck = loads_per_truck_per_day * days_to_complete
     trucks_needed = math.ceil(total_loads / total_loads_per_truck)
@@ -74,6 +75,7 @@ if job_type == "By the Load":
     st.metric("Total Tons", f"{total_tons:.0f} tons")
     st.metric("Trucks Needed", trucks_needed)
     st.metric("Total Loads", f"{total_loads:.2f}")
+    st.metric("Total Tons", f"{total_tons:.2f} tons")
     st.metric("Total Miles", f"{total_miles:.0f} mi")
     st.metric("Fuel Cost", f"${fuel_cost:,.2f}")
     st.metric("Driver Cost", f"${driver_cost:,.2f}")
