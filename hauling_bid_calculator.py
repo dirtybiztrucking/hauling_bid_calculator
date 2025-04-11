@@ -17,7 +17,7 @@ material_densities = {
 # --- Job Type Selector ---
 job_type = st.selectbox("What type of job are you bidding?", ["By the Load", "Hourly"])
 
-# --- Load-Based Calculator ---
+# === LOAD-BASED CALCULATOR ===
 if job_type == "By the Load":
     st.sidebar.header("🔧 Inputs for Load-Based Job")
 
@@ -40,6 +40,7 @@ if job_type == "By the Load":
     overhead_pct = st.sidebar.number_input("Overhead %", value=10.0) / 100
     profit_margin_pct = st.sidebar.number_input("Profit Margin %", value=20.0) / 100
 
+    # Calculations
     round_trip_miles = one_way_distance * 2
     total_loads = total_material / truck_capacity
     loads_per_truck_per_day = work_hours_per_day / round_trip_time
@@ -60,8 +61,9 @@ if job_type == "By the Load":
     price_per_load = total_bid / total_loads
     profit_per_load = price_per_load - cost_per_load
     break_even_hourly = total_cost / (trucks_needed * work_hours_per_day * days_to_complete)
-    total_tons = total_material * material_density
+    total_tons = total_material * material_density if job_type == "By the Load" else 0
 
+    # Summary Output
     st.subheader("📊 Bid Summary (Per Load)")
     st.metric("Material", material_type)
     st.metric("Material Density", f"{material_density} T/CY")
@@ -82,21 +84,21 @@ if job_type == "By the Load":
     st.metric("Profit per Load", f"${profit_per_load:,.2f}")
     st.metric("Break-Even Hourly Rate", f"${break_even_hourly:,.2f}")
 
-# --- Hourly Bidding Section ---
+# === HOURLY CALCULATOR ===
 elif job_type == "Hourly":
     st.sidebar.header("🔧 Inputs for Hourly Job")
 
     hourly_trucks = st.sidebar.number_input("Number of Trucks", value=3)
     hourly_hours_per_day = st.sidebar.number_input("Hours per Day", value=8)
     hourly_days = st.sidebar.number_input("Number of Days", value=5)
-    hourly_driver_rate = st.sidebar.number_input("Driver Hourly Rate ($)", value=32.0)
+    driver_hourly_rate = st.sidebar.number_input("Driver Hourly Rate ($)", value=32.0)
     truck_hourly_cost = st.sidebar.number_input("Truck Cost per Hour ($)", value=60.0)
     fuel_cost_hourly = st.sidebar.number_input("Fuel Cost per Hour ($)", value=15.0)
     overhead_pct = st.sidebar.number_input("Overhead %", value=10.0) / 100
     profit_margin_pct = st.sidebar.number_input("Profit Margin %", value=20.0) / 100
 
     total_hourly_hours = hourly_trucks * hourly_hours_per_day * hourly_days
-    hourly_driver_cost = total_hourly_hours * hourly_driver_rate
+    hourly_driver_cost = hourly_trucks * hourly_hours_per_day * hourly_days * driver_hourly_rate
     hourly_truck_cost = total_hourly_hours * truck_hourly_cost
     hourly_fuel_cost = total_hourly_hours * fuel_cost_hourly
     hourly_base_cost = hourly_driver_cost + hourly_truck_cost + hourly_fuel_cost
@@ -105,6 +107,7 @@ elif job_type == "Hourly":
     hourly_total_bid = hourly_base_cost + hourly_overhead + hourly_profit
     hourly_rate = hourly_total_bid / total_hourly_hours
 
+    # Summary Output
     st.subheader("📊 Hourly Job Bid Summary")
     st.metric("Total Hours", total_hourly_hours)
     st.metric("Driver Cost", f"${hourly_driver_cost:,.2f}")
@@ -116,7 +119,7 @@ elif job_type == "Hourly":
     st.metric("Total Bid", f"${hourly_total_bid:,.2f}")
     st.metric("Bid Hourly Rate", f"${hourly_rate:,.2f}/hr")
 
-# --- Print to PDF Button ---
+# === PRINT BUTTON ===
 st.markdown("---")
 st.subheader("🖨️ Export or Print")
 
